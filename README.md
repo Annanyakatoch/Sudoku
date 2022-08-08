@@ -1,105 +1,63 @@
-# Can Convolutional Neural Networks Crack Sudoku Puzzles?
+# sudoku
+C++ sudoku game
 
-Sudoku is a popular number puzzle that requires you to fill blanks in a 9X9 grid with digits so that each column, each row, and each of the nine 3×3 subgrids contains all of the digits from 1 to 9. There have been various approaches to solving that, including computational ones. In this project, I show that simple convolutional neural networks have the potential to crack Sudoku without any rule-based postprocessing.
+## Program Use ##
 
-## Requirements
-  * NumPy >= 1.11.1
-  * TensorFlow == 1.1
-	
-## Background
-* To see what Sudoku is, check the [wikipedia](https://en.wikipedia.org/wiki/Sudoku)
-* To investigate this task comprehensively, read through [McGuire et al. 2013](https://arxiv.org/pdf/1201.0749.pdf).
+Game can be started by compiling (with makefile) and running sudoku
 
-## Dataset
-* 1M games were generated using `generate_sudoku.py` for training. I've uploaded them on the Kaggle dataset storage. They are available [here](https://www.kaggle.com/bryanpark/sudoku/downloads/sudoku.zip).
-* 30 authentic games were collected from http://1sudoku.com.
+1. Default action is to start interactive, 9x9 game
+2. To fill in cell, enter the column number, row number, and value you want to enter (1 based). Separate with spaces, commas, or any other delimiter (besides an integer of course)
+3. At any time, enter "Solve" to have the backtracer solve the game for you based on your current position.
+4. If you've walked yoursel into an impossible configuration you will be prompted to first clear the board
+5. Once solved, you will be asked if you want to play again
 
-## Model description
-* 10 blocks of convolution layers of kernel size 3.
+6. Run speed test / alternate game configurations using command flags below
 
-## File description
-  * `generate_sudoku.py` create sudoku games. You don't have to run this. Instead, download [pre-generated games](https://www.kaggle.com/bryanpark/sudoku/downloads/sudoku.zip).
-  * `hyperparams.py` includes all adjustable hyper parameters.
-  * `data_load.py` loads data and put them in queues so multiple mini-bach data are generated in parallel.
-  * `modules.py` contains some wrapper functions.
-  * `train.py` is for training.
-  * `test.py` is for test.
-  
+Command line flags can be used to configure the game
 
-## Training
-* STEP 1. Download and extract [training data](https://www.kaggle.com/bryanpark/sudoku).
-* STEP 2. Run `python train.py`. Or download the [pretrained file](https://www.dropbox.com/s/ipnwnorc7nz5hpe/logdir.tar.gz?dl=0).
-
-## Test
-* Run `python test.py`.
-
-## Evaluation Metric
-
-Accuracy is defined as 
-
-Number of blanks where the prediction matched the solution / Number of blanks.
-
-## Results
-
-After a couple of hours of training, the training curve seems to reach the optimum. 
-
-<img src="fig/training_curve.png">
-I use a simple trick in inference. Instead of cracking the whole blanks all at once, I fill in a single blank where the prediction is the most probable among the all predictions. As can be seen below, my model scored 0.86 in accuracy. Details are available in the `results` folder.
+-s --seed Set the random seed to replicate results
+-u --Unittest Runs unit (speed) test with both solvers. Specify number of times to run
+-g --gamesize Integer value to specify game size
+				ie 9 for 9x9 game, 16 for 16x16 etc.
+-n --nobs Specify number of pre-filled values to include (ie. immutable Sudoku cells)
+-v --verbose Add flag with no argument for verbose output after every unit test. No effect if game played in interactive mode
 
 
- 
-| Level  |  Accuracy (#correct/#blanks=acc.) |
-| ---    |---     |
-|Easy|**47/47 = 1.00**|
-|Easy|**45/45 = 1.00**|
-|Easy|**47/47 = 1.00**|
-|Easy|**45/45 = 1.00**|
-|Easy|**47/47 = 1.00**|
-|Easy|**46/46 = 1.00**|
-|Medium|33/53 = 0.62|
-|Medium|**55/55 = 1.00**|
-|Medium|**55/55 = 1.00**|
-|Medium|**53/53 = 1.00**|
-|Medium|33/52 = 0.63|
-|Medium|51/56 = 0.91|
-|Hard|29/56 = 0.52|
-|Hard|**55/55 = 1.00**|
-|Hard|27/55 = 0.49|
-|Hard|**57/57 = 1.00**|
-|Hard|35/55 = 0.64|
-|Hard|15/56 = 0.27|
-|Expert|**56/56 = 1.00**|
-|Expert|**55/55 = 1.00**|
-|Expert|**54/54 = 1.00**|
-|Expert|**55/55 = 1.00**|
-|Expert|17/55 = 0.31|
-|Expert|**54/54 = 1.00**|
-|Evil|**50/50 = 1.00**|
-|Evil|**50/50 = 1.00**|
-|Evil|**49/49 = 1.00**|
-|Evil|28/53 = 0.53|
-|Evil|**51/51 = 1.00**|
-|Evil|**51/51 = 1.00**|
-|Total Accuracy| 1345/1568 = _0.86_|
+Notes:
 
-## References
+- Puzzles are always generating using a sort of reverse backtrace (ie. filling in diagonal using random permutation, solving puzzle, and then removing cells). This means that sometimes generating the puzzle takes longer than solving it (especially for big puzzles). The unit test times only the solver function
+- During the class demo, in the speed test, our first puzzle took an order of magnitude longer to solve for the backtracer than the other 9 puzzles. Upon investigation, it turns out that this was likely because of the constant random seed (there is significant variability in time to solve puzzles for backtracer, the Alternating Projections approach seems to be less variable for given puzzle configuration)
 
-If you use this code for research, please cite:
 
-```
-@misc{sudoku2018,
-  author = {Park, Kyubyong},
-  title = {Can Convolutional Neural Networks Crack Sudoku Puzzles?},
-  year = {2018},
-  publisher = {GitHub},
-  journal = {GitHub repository},
-  howpublished = {\url{https://github.com/Kyubyong/sudoku}}
-}
-```
+Items to grade:
 
-## Papers that referenced this repository
+1. Game Logic/ Gameplay of the interactive game + command line tools/speed tests
+2. Back-tracking solver (the "solve" function in solve.cpp)
+3. Alternating projection solver (the "DR" function in altproj.cpp)
 
-  * [OptNet: Differentiable Optimization as a Layer in Neural Networks](http://proceedings.mlr.press/v70/amos17a/amos17a.pdf)
-  * [Recurrent Relational Networks for Complex Relational Reasoning](https://arxiv.org/abs/1711.08028)
-  * [SATNet: Bridging deep learning and logical reasoning using a differentiable satisfiability solver](https://arxiv.org/abs/1905.12149)
+## Project Contributions ##
+
+1. Matt:
+    * implemented two Sudoku solvers: backtracking and alternating projections
+    * implemented function to generate a Sudoku puzzle
+
+2. Alex:
+    * implements actual game-play and game-play logic (taking user input, printing/formatting to screen etc.)
+    * implemented comamnd line flags and associated functions(ie. unit testing / timing functions)
+
+## Notes on Building Project ##
+
+Build reqiures the `armadillo` library.  You can download it from the website
+http://arma.sourceforge.net/.
+
+## References ##
+
+1. Pseudo-code for backtracking algorithm
+    - http://moritz.faui2k3.org/en/yasss
+
+2. Idea to use Douglas-Rachford splitting to solve Sudoku
+    - "Recent Results on Douglas–Rachford Methods for Combinatorial Optimization Problems"
+
+3. Function timing code
+	- http://stackoverflow.com/questions/29719999/testing-function-for-speed-performance-in-cpp
 
